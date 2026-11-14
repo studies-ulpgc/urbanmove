@@ -47,3 +47,6 @@ jobs:
 
       - name: Build Availability Docker image
         run: docker build -t urbanmove-availability:ci ./services/availability
+
+      - name: Build Telemetry Docker image
+        run: docker build -t urbanmove-telemetry:ci ./services/telemetry
