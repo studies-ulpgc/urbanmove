@@ -1,4 +1,4 @@
-# Availability Service
+# [Availability Service](http://localhost:8002/docs)
 
 Microservicio encargado de gestionar qué vehículos pueden reservarse en cada momento y evitar reservas simultáneas.
 - **Base de datos:** `availability_db` (Tabla `vehicle_availability`)
