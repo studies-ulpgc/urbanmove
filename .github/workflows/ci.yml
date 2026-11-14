@@ -56,3 +56,6 @@ jobs:
 
       - name: Build Maintenance Docker image
         run: docker build -t urbanmove-maintenance:ci ./services/maintenance
+
+      - name: Build Relocation Docker image
+        run: docker build -t urbanmove-relocation:ci ./services/relocation

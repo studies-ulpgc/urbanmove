@@ -3,6 +3,8 @@ echo Instalando dependencias base...
 if not exist .venv python -m venv .venv
 .venv\Scripts\python.exe -m pip install fastapi uvicorn sqlalchemy boto3 httpx pydantic ruff -q
 
+.venv\Scripts\ruff.exe check --fix services/
+
 echo Ejecutando TODOS los tests de UrbanMove...
 for /D %%S in (services\*) do (
     echo.
