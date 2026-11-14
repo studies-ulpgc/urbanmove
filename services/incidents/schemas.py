@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models import IncidentSeverity, IncidentStatus
+from models import IncidentSeverity
 from pydantic import BaseModel, ConfigDict
 
 

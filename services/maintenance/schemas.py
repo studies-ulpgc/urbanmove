@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from models import MaintenanceType, OrderStatus
+from models import MaintenanceType
 from pydantic import BaseModel, ConfigDict
 
 
