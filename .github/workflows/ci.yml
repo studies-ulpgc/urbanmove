@@ -50,3 +50,6 @@ jobs:
 
       - name: Build Telemetry Docker image
         run: docker build -t urbanmove-telemetry:ci ./services/telemetry
+
+      - name: Build Incidents Docker image
+        run: docker build -t urbanmove-incidents:ci ./services/incidents
