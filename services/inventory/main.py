@@ -1,13 +1,13 @@
 import logging
 import uuid
-from typing import List, Optional
-from fastapi import Depends, FastAPI, Header, HTTPException
-from sqlalchemy.orm import Session
+
 import repository
 from database import Base, engine, get_db
 from events import publish_event
+from fastapi import Depends, FastAPI, Header, HTTPException
 from models import VehicleStatus
 from schemas import VehicleCreate, VehicleResponse, VehicleStatusUpdate
+from sqlalchemy.orm import Session
 
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +26,7 @@ def health_check():
 def register_vehicle(
         payload: VehicleCreate,
         db: Session = Depends(get_db),
-        x_correlation_id: Optional[str] = Header(default=None)
+        x_correlation_id: str | None = Header(default=None)
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     vehicle = repository.create_vehicle(db, payload)
@@ -34,10 +34,10 @@ def register_vehicle(
     logger.info(f'"Created {vehicle.id}", "correlation_id": "{corr_id}"')
     return vehicle
 
-@app.get("/vehicles", response_model=List[VehicleResponse])
+@app.get("/vehicles", response_model=list[VehicleResponse])
 def list_vehicles(
-        zone_id: Optional[str] = None,
-        status: Optional[VehicleStatus] = None,
+        zone_id: str | None = None,
+        status: VehicleStatus | None = None,
         db: Session = Depends(get_db)
 ):
     return repository.find_vehicles(db, zone_id, status)
@@ -47,7 +47,7 @@ def update_status(
         vehicle_id: str,
         payload: VehicleStatusUpdate,
         db: Session = Depends(get_db),
-        x_correlation_id: Optional[str] = Header(default=None)
+        x_correlation_id: str | None = Header(default=None)
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     vehicle = repository.find_vehicle_by_id(db, vehicle_id)

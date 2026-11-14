@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 import boto3
 
 logger = logging.getLogger("inventory")
@@ -20,7 +21,7 @@ sns_client = boto3.client(
 def build_event(event_type: str, payload: dict, correlation_id: str) -> dict:
     return {
         "event_id": str(uuid.uuid4()),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "source": "inventory-service",
         "event_type": event_type,
         "schema_version": "1.0",

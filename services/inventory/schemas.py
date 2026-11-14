@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+
 from models import VehicleStatus, VehicleType
+from pydantic import BaseModel, ConfigDict
+
 
 class VehicleCreate(BaseModel):
     vehicle_type: VehicleType

@@ -1,7 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from sqlalchemy import Column, DateTime, String
+
 from database import Base
+from sqlalchemy import Column, DateTime, String
+
 
 class VehicleStatus(str, Enum):
     AVAILABLE = "AVAILABLE"

@@ -1,8 +1,9 @@
 import uuid
-from typing import List, Optional
-from sqlalchemy.orm import Session
+
 from models import Vehicle, VehicleStatus
 from schemas import VehicleCreate
+from sqlalchemy.orm import Session
+
 
 def create_vehicle(db: Session, data: VehicleCreate) -> Vehicle:
     vehicle = Vehicle(
@@ -17,7 +18,7 @@ def create_vehicle(db: Session, data: VehicleCreate) -> Vehicle:
     db.refresh(vehicle)
     return vehicle
 
-def find_vehicles(db: Session, zone_id: Optional[str], status: Optional[VehicleStatus]) -> List[Vehicle]:
+def find_vehicles(db: Session, zone_id: str | None, status: VehicleStatus | None) -> list[Vehicle]:
     query = db.query(Vehicle)
     if zone_id:
         query = query.filter(Vehicle.zone_id == zone_id)
@@ -25,7 +26,7 @@ def find_vehicles(db: Session, zone_id: Optional[str], status: Optional[VehicleS
         query = query.filter(Vehicle.status == status.value)
     return query.all()
 
-def find_vehicle_by_id(db: Session, vehicle_id: str) -> Optional[Vehicle]:
+def find_vehicle_by_id(db: Session, vehicle_id: str) -> Vehicle | None:
     return db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
 def save_status(db: Session, vehicle: Vehicle, new_status: VehicleStatus) -> Vehicle:
