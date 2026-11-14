@@ -44,3 +44,6 @@ jobs:
 
       - name: Build Inventory Docker image
         run: docker build -t urbanmove-inventory:ci ./services/inventory
+
+      - name: Build Availability Docker image
+        run: docker build -t urbanmove-availability:ci ./services/availability
