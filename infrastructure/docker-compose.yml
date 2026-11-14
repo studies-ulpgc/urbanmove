@@ -133,3 +133,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  acquisitions-service:
+    build: ../services/acquisitions
+    container_name: urbanmove-acquisitions
+    ports:
+      - "8007:8007"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/acquisitions_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8007/health')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
