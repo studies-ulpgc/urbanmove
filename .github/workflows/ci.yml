@@ -53,3 +53,6 @@ jobs:
 
       - name: Build Incidents Docker image
         run: docker build -t urbanmove-incidents:ci ./services/incidents
+
+      - name: Build Maintenance Docker image
+        run: docker build -t urbanmove-maintenance:ci ./services/maintenance

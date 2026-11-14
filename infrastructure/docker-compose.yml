@@ -89,13 +89,30 @@ services:
     ports:
       - "8004:8004"
     environment:
-      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/telemetry_db
+      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/incidents_db
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  maintenance-service:
+    build: ../services/maintenance
+    container_name: urbanmove-maintenance
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/maintenance_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')" ]
       interval: 10s
       timeout: 5s
       retries: 3
