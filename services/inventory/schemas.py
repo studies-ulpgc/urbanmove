@@ -9,8 +9,10 @@ class VehicleCreate(BaseModel):
     model: str
     zone_id: str
 
+
 class VehicleStatusUpdate(BaseModel):
     status: VehicleStatus
+
 
 class VehicleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

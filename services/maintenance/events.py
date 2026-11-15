@@ -5,6 +5,7 @@ import uuid
 from datetime import UTC, datetime
 
 import boto3
+from botocore.config import Config
 
 logger = logging.getLogger("maintenance")
 AWS_ENDPOINT = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")
@@ -15,8 +16,10 @@ sns_client = boto3.client(
     endpoint_url=AWS_ENDPOINT,
     region_name="us-east-1",
     aws_access_key_id="test",
-    aws_secret_access_key="test"
+    aws_secret_access_key="test",
+    config=Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1}),
 )
+
 
 def build_event(event_type: str, payload: dict, correlation_id: str) -> dict:
     return {
@@ -26,8 +29,9 @@ def build_event(event_type: str, payload: dict, correlation_id: str) -> dict:
         "event_type": event_type,
         "schema_version": "1.0",
         "correlation_id": correlation_id,
-        "payload": payload
+        "payload": payload,
     }
+
 
 def publish_event(event_type: str, payload: dict, correlation_id: str) -> None:
     event = build_event(event_type, payload, correlation_id)
@@ -35,7 +39,7 @@ def publish_event(event_type: str, payload: dict, correlation_id: str) -> None:
         sns_client.publish(
             TopicArn=SNS_TOPIC_ARN,
             Message=json.dumps(event),
-            MessageAttributes={"event_type": {"DataType": "String", "StringValue": event_type}}
+            MessageAttributes={"event_type": {"DataType": "String", "StringValue": event_type}},
         )
         logger.info(f'"Published {event_type}", "correlation_id": "{correlation_id}"')
     except Exception as error:

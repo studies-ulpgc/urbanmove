@@ -26,9 +26,9 @@ def health_check():
 
 @app.post("/maintenance-orders", response_model=MaintenanceResponse, status_code=201)
 def create_maintenance_order(
-        payload: MaintenanceCreate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    payload: MaintenanceCreate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     order = repository.create_order(db, payload)
@@ -44,9 +44,9 @@ def list_maintenance_orders(status: OrderStatus | None = None, db: Session = Dep
 
 @app.patch("/maintenance-orders/{order_id}/complete", response_model=MaintenanceResponse)
 def complete_maintenance_order(
-        order_id: str,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    order_id: str,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     order = repository.complete_order(db, order_id)

@@ -5,13 +5,19 @@ import uuid
 from datetime import UTC, datetime
 
 import boto3
+from botocore.config import Config
 
 logger = logging.getLogger("acquisitions")
 AWS_ENDPOINT = os.getenv("AWS_ENDPOINT_URL", "http://localhost:4566")
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:000000000000:urbanmove-events")
 
 sns_client = boto3.client(
-    "sns", endpoint_url=AWS_ENDPOINT, region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test"
+    "sns",
+    endpoint_url=AWS_ENDPOINT,
+    region_name="us-east-1",
+    aws_access_key_id="test",
+    aws_secret_access_key="test",
+    config=Config(connect_timeout=1, read_timeout=1, retries={"max_attempts": 1}),
 )
 
 

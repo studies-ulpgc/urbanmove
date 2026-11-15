@@ -11,22 +11,22 @@ from sqlalchemy.orm import Session
 
 logging.basicConfig(
     level=logging.INFO,
-    format='{"timestamp": "%(asctime)s", "service": "inventory", "level": "%(levelname)s", "message": %(message)s}'
+    format='{"timestamp": "%(asctime)s", "service": "inventory", "level": "%(levelname)s", "message": %(message)s}',
 )
 logger = logging.getLogger("inventory")
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="UrbanMove - Inventory Service", version="1.0.0")
 
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "inventory"}
 
+
 @app.post("/vehicles", response_model=VehicleResponse, status_code=201)
 def register_vehicle(
-        payload: VehicleCreate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None)
+    payload: VehicleCreate, db: Session = Depends(get_db), x_correlation_id: str | None = Header(default=None)
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     vehicle = repository.create_vehicle(db, payload)
@@ -34,20 +34,18 @@ def register_vehicle(
     logger.info(f'"Created {vehicle.id}", "correlation_id": "{corr_id}"')
     return vehicle
 
+
 @app.get("/vehicles", response_model=list[VehicleResponse])
-def list_vehicles(
-        zone_id: str | None = None,
-        status: VehicleStatus | None = None,
-        db: Session = Depends(get_db)
-):
+def list_vehicles(zone_id: str | None = None, status: VehicleStatus | None = None, db: Session = Depends(get_db)):
     return repository.find_vehicles(db, zone_id, status)
+
 
 @app.patch("/vehicles/{vehicle_id}/status", response_model=VehicleResponse)
 def update_status(
-        vehicle_id: str,
-        payload: VehicleStatusUpdate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None)
+    vehicle_id: str,
+    payload: VehicleStatusUpdate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     vehicle = repository.find_vehicle_by_id(db, vehicle_id)
@@ -57,11 +55,12 @@ def update_status(
     logger.info(f'"Updated {vehicle_id} -> {updated.status}", "correlation_id": "{corr_id}"')
     return updated
 
+
 def _vehicle_payload(vehicle) -> dict:
     return {
         "vehicle_id": vehicle.id,
         "vehicle_type": vehicle.vehicle_type,
         "model": vehicle.model,
         "zone_id": vehicle.zone_id,
-        "status": vehicle.status
+        "status": vehicle.status,
     }

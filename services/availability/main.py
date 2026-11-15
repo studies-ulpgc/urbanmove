@@ -24,9 +24,9 @@ def health_check():
 
 @app.post("/availability", response_model=AvailabilityResponse, status_code=201)
 def register_availability(
-        payload: AvailabilityRegister,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    payload: AvailabilityRegister,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     record = repository.upsert_availability(db, payload)
@@ -36,18 +36,18 @@ def register_availability(
 
 @app.get("/availability", response_model=list[AvailabilityResponse])
 def list_available(
-        zone_id: str | None = None,
-        vehicle_type: str | None = None,
-        db: Session = Depends(get_db),
+    zone_id: str | None = None,
+    vehicle_type: str | None = None,
+    db: Session = Depends(get_db),
 ):
     return repository.find_available(db, zone_id, vehicle_type)
 
 
 @app.post("/availability/{vehicle_id}/lock", response_model=AvailabilityResponse)
 def lock_vehicle(
-        vehicle_id: str,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    vehicle_id: str,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     record = repository.set_availability(db, vehicle_id, False)
@@ -59,9 +59,9 @@ def lock_vehicle(
 
 @app.post("/availability/{vehicle_id}/release", response_model=AvailabilityResponse)
 def release_vehicle(
-        vehicle_id: str,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    vehicle_id: str,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     record = repository.set_availability(db, vehicle_id, True)

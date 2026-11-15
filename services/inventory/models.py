@@ -16,9 +16,11 @@ class VehicleStatus(str, Enum):
     READY_FOR_SERVICE = "READY_FOR_SERVICE"
     RETIRED = "RETIRED"
 
+
 class VehicleType(str, Enum):
     BIKE = "BIKE"
     SCOOTER = "SCOOTER"
+
 
 class Vehicle(Base):
     __tablename__ = "vehicles"

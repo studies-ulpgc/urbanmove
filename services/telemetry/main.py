@@ -26,9 +26,9 @@ def health_check():
 
 @app.post("/telemetry", response_model=TelemetryResponse, status_code=201)
 def record_telemetry(
-        payload: TelemetryCreate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    payload: TelemetryCreate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     record = repository.save_telemetry(db, payload)

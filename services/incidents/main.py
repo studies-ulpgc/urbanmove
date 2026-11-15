@@ -26,9 +26,9 @@ def health_check():
 
 @app.post("/incidents", response_model=IncidentResponse, status_code=201)
 def report_incident(
-        payload: IncidentCreate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    payload: IncidentCreate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     incident = repository.create_incident(db, payload)
@@ -44,9 +44,9 @@ def list_incidents(status: IncidentStatus | None = None, db: Session = Depends(g
 
 @app.patch("/incidents/{incident_id}/resolve", response_model=IncidentResponse)
 def resolve_incident(
-        incident_id: str,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    incident_id: str,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     incident = repository.resolve_incident(db, incident_id)

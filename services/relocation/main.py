@@ -26,9 +26,9 @@ def health_check():
 
 @app.post("/relocation-orders", response_model=RelocationResponse, status_code=201)
 def create_relocation_order(
-        payload: RelocationCreate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    payload: RelocationCreate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     order = repository.create_order(db, payload)
@@ -44,10 +44,10 @@ def list_relocation_orders(status: RelocationStatus | None = None, db: Session =
 
 @app.patch("/relocation-orders/{order_id}/status", response_model=RelocationResponse)
 def update_relocation_status(
-        order_id: str,
-        payload: RelocationStatusUpdate,
-        db: Session = Depends(get_db),
-        x_correlation_id: str | None = Header(default=None),
+    order_id: str,
+    payload: RelocationStatusUpdate,
+    db: Session = Depends(get_db),
+    x_correlation_id: str | None = Header(default=None),
 ):
     corr_id = x_correlation_id or str(uuid.uuid4())
     order = repository.update_status(db, order_id, payload.status)
