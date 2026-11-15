@@ -34,6 +34,24 @@ jobs:
             (cd "$service_dir" && python -m unittest discover -p "test_*.py")
           done
 
+      - name: Check code style with Ruff
+        run: ruff check services/ lambdas/
+
+      - name: Run unit tests for all services and lambdas
+        run: |
+          for dir in services/*/ lambdas/*/; do
+            echo "Testing $dir"
+            (cd "$dir" && python -m unittest discover -p "test_*.py")
+          done
+
+      - name: Package Lambdas artifacts
+        run: |
+          mkdir -p dist
+          for lambda_dir in lambdas/*/; do
+            name=$(basename "$lambda_dir")
+            (cd "$lambda_dir" && zip -r "../../dist/${name}.zip" handler.py)
+          done
+
   build-docker:
     runs-on: ubuntu-latest
     needs: lint-and-test
