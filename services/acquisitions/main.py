@@ -7,6 +7,7 @@ import repository
 from database import Base, engine, get_db
 from events import publish_event
 from fastapi import Depends, FastAPI, Header
+from fastapi.middleware.cors import CORSMiddleware
 from schemas import AcquisitionCreate, AcquisitionResponse
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,7 @@ logger = logging.getLogger("acquisitions")
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="UrbanMove - Acquisitions Service", version="1.0.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 INVENTORY_URL = os.getenv("INVENTORY_URL", "http://inventory-service:8001")
 
 

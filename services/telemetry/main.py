@@ -5,6 +5,7 @@ import repository
 from database import Base, engine, get_db
 from events import publish_event
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from schemas import TelemetryCreate, TelemetryResponse
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,7 @@ logger = logging.getLogger("telemetry")
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="UrbanMove - Telemetry Service", version="1.0.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 LOW_BATTERY_THRESHOLD = 20.0
 
 

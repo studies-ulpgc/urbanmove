@@ -1,0 +1,77 @@
+<div class="container">
+  <header class="header">
+    <div>
+      <h1>UrbanMove · Operaciones y Mantenimiento</h1>
+      <p>Control de flota, taller, recolocación y adquisiciones</p>
+    </div>
+    <button class="btn-primary" (click)="loadAll()">Actualizar paneles</button>
+  </header>
+
+  <section class="kpis">
+    <div class="card">
+      <span class="kpi-label">Flota Total</span>
+      <strong class="kpi-value">{{ vehicles.length }}</strong>
+    </div>
+    <div class="card">
+      <span class="kpi-label">Órdenes Taller Abiertas</span>
+      <strong class="kpi-value">{{ openMaintenanceCount }}</strong>
+    </div>
+    <div class="card">
+      <span class="kpi-label">Recolocaciones Pendientes</span>
+      <strong class="kpi-value">{{ pendingRelocationCount }}</strong>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h3>1. Inventario de Flota (8001)</h3>
+      <div class="row" *ngFor="let v of vehicles">
+        <span><b>{{ v.id }}</b> · {{ v.vehicle_type }} ({{ v.model }}) · {{ v.zone_id }}</span>
+        <span class="badge">{{ v.status }}</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>2. Registrar Adquisición (8007)</h3>
+      <form class="form" (ngSubmit)="createAcquisition()">
+        <select [(ngModel)]="acq.vehicle_type" name="type">
+          <option value="SCOOTER">SCOOTER</option>
+          <option value="BIKE">BIKE</option>
+        </select>
+        <input [(ngModel)]="acq.model" name="model" placeholder="Modelo (ej. Xiaomi Pro 2)" required />
+        <input [(ngModel)]="acq.zone_id" name="zone" placeholder="Zona (ej. ZONA-1)" required />
+        <input [(ngModel)]="acq.quantity" name="qty" type="number" min="1" required />
+        <button class="btn-blue" type="submit">Comprar lote</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h3>3. Órdenes de Mantenimiento (8005)</h3>
+      <form class="form-inline" (ngSubmit)="createMaintenance()">
+        <input [(ngModel)]="mnt.vehicle_id" name="veh" placeholder="ID Vehículo" required />
+        <select [(ngModel)]="mnt.order_type" name="mtype">
+          <option value="RECHARGE">RECHARGE</option>
+          <option value="REPAIR">REPAIR</option>
+        </select>
+        <input [(ngModel)]="mnt.reason" name="reason" placeholder="Motivo" required />
+        <button class="btn-amber" type="submit">Retirar</button>
+      </form>
+      <div class="row" *ngFor="let o of orders">
+        <span><b>{{ o.vehicle_id }}</b> [{{ o.order_type }}] — {{ o.reason }} ({{ o.status }})</span>
+        <button *ngIf="o.status !== 'COMPLETED'" class="btn-small" (click)="completeMaintenance(o.id)">
+          Reincorporar
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>4. Órdenes de Recolocación (8006)</h3>
+      <div class="row" *ngFor="let r of relocations">
+        <span><b>{{ r.vehicle_id }}</b>: {{ r.from_zone }} → {{ r.to_zone }} ({{ r.status }})</span>
+        <button *ngIf="r.status !== 'COMPLETED'" class="btn-small" (click)="completeRelocation(r.id)">
+          Completar
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

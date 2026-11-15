@@ -5,6 +5,7 @@ import repository
 from database import Base, engine, get_db
 from events import publish_event
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from models import OrderStatus
 from schemas import MaintenanceCreate, MaintenanceResponse
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ logger = logging.getLogger("maintenance")
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="UrbanMove - Maintenance Service", version="1.0.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 @app.get("/health")

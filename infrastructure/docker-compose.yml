@@ -150,3 +150,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  maintenance-app:
+    build: ../frontend/maintenance-app
+    container_name: urbanmove-maintenance-app
+    ports:
+      - "3002:80"
+    restart: on-failure
