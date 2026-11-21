@@ -44,9 +44,11 @@ jobs:
         run: |
           mkdir -p dist
           for lambda_dir in lambdas/*/; do
-            name=$(basename "$lambda_dir")
-            zip -r "dist/${name}.zip" shared/
-            (cd "$lambda_dir" && zip -r "../../dist/${name}.zip" handler.py)
+            if [ -f "${lambda_dir}handler.py" ]; then
+              name=$(basename "$lambda_dir")
+              zip -r "dist/${name}.zip" shared/ -x "shared/__pycache__/*"
+              (cd "$lambda_dir" && zip -r "../../dist/${name}.zip" handler.py)
+            fi
           done
 
   build-docker:
