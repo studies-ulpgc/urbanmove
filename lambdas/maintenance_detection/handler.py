@@ -1,65 +1,52 @@
-import json
 import logging
 import os
-import urllib.request
+
+from shared.lambda_utils import (
+    OrderClient,
+    UrllibOrderClient,
+    is_duplicate_event,
+    mark_event_processed,
+    parse_sqs_record,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("maintenance-lambda")
 
-MAINTENANCE_URL = os.getenv("MAINTENANCE_URL", "http://localhost:8005")
+MAINTENANCE_URL = os.getenv("MAINTENANCE_URL", "http://maintenance-service:8005")
 MAX_USES_THRESHOLD = 50
 
 
-def lambda_handler(event: dict, context=None) -> dict:
-    processed = 0
-    for record in event.get("Records", []):
-        envelope = _parse_record(record)
-        if _requires_maintenance(envelope):
-            _create_maintenance_order(envelope)
-            processed += 1
+def lambda_handler(event: dict, context=None, client: OrderClient | None = None) -> dict:
+    http_client = client or UrllibOrderClient()
+    processed = sum(_process_record(record, http_client) for record in event.get("Records", []))
     return {"statusCode": 200, "processed": processed}
 
 
-def _parse_record(record: dict) -> dict:
-    body = json.loads(record["body"])
-    if "Message" in body:
-        return json.loads(body["Message"])
-    return body
+def _process_record(record: dict, client: OrderClient) -> int:
+    envelope = parse_sqs_record(record)
+    if is_duplicate_event(envelope.get("event_id")) or not _requires_maintenance(envelope):
+        return 0
+    _send_order(envelope, client)
+    mark_event_processed(envelope.get("event_id"))
+    return 1
 
 
 def _requires_maintenance(envelope: dict) -> bool:
     event_type = envelope.get("event_type", "")
-    payload = envelope.get("payload", {})
-    if event_type in {"VehicleBatteryLow", "IncidentReported"}:
-        return True
-    return payload.get("uses_since_review", 0) >= MAX_USES_THRESHOLD
+    uses = envelope.get("payload", {}).get("uses_since_review", 0)
+    return event_type in {"VehicleBatteryLow", "IncidentReported"} or uses >= MAX_USES_THRESHOLD
 
 
-def _create_maintenance_order(envelope: dict) -> None:
-    payload = envelope.get("payload", {})
-    order_data = _build_order_payload(envelope.get("event_type", ""), payload)
-    req = urllib.request.Request(
-        f"{MAINTENANCE_URL}/maintenance-orders",
-        data=json.dumps(order_data).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "x-correlation-id": envelope.get("correlation_id", "lambda-auto"),
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=5) as resp:
-        logger.info(f"Maintenance order created: status={resp.status}")
+def _send_order(envelope: dict, client: OrderClient) -> None:
+    order_data = _build_order_payload(envelope.get("event_type", ""), envelope.get("payload", {}))
+    corr_id = envelope.get("correlation_id", "auto")
+    status = client.post_order(f"{MAINTENANCE_URL}/maintenance-orders", order_data, corr_id)
+    logger.info(f'"Maintenance order created: status={status}", "correlation_id": "{corr_id}"')
 
 
 def _build_order_payload(event_type: str, payload: dict) -> dict:
     if event_type == "VehicleBatteryLow":
-        return {
-            "vehicle_id": payload["vehicle_id"],
-            "order_type": "RECHARGE",
-            "reason": f"Low battery detected: {payload.get('battery_level')}%",
-        }
-    return {
-        "vehicle_id": payload["vehicle_id"],
-        "order_type": "REPAIR",
-        "reason": payload.get("description", "Excessive usage threshold reached"),
-    }
+        reason = f"Low battery: {payload.get('battery_level')}%"
+        return {"vehicle_id": payload["vehicle_id"], "order_type": "RECHARGE", "reason": reason}
+    reason = payload.get("description", "Excessive usage")
+    return {"vehicle_id": payload["vehicle_id"], "order_type": "REPAIR", "reason": reason}

@@ -22,3 +22,37 @@ DL_QUEUE_ARN=$(awslocal sqs get-queue-attributes --queue-url "$DL_QUEUE_URL" --a
 awslocal sns subscribe --topic-arn "$TOPIC_ARN" --protocol sqs --notification-endpoint "$MAINT_QUEUE_ARN"
 awslocal sns subscribe --topic-arn "$TOPIC_ARN" --protocol sqs --notification-endpoint "$RELOC_QUEUE_ARN"
 awslocal sns subscribe --topic-arn "$TOPIC_ARN" --protocol sqs --notification-endpoint "$DL_QUEUE_ARN"
+
+apt-get update -qq && apt-get install -y -qq zip > /dev/null
+
+mkdir -p /tmp/lambdas
+cd /workspace
+zip -rq /tmp/lambdas/maintenance_detection.zip shared/
+(cd lambdas/maintenance_detection && zip -rq /tmp/lambdas/maintenance_detection.zip handler.py)
+
+zip -rq /tmp/lambdas/relocation.zip shared/
+(cd lambdas/relocation && zip -rq /tmp/lambdas/relocation.zip handler.py)
+
+awslocal lambda create-function \
+  --function-name maintenance-detection-lambda \
+  --runtime python3.11 \
+  --handler handler.lambda_handler \
+  --zip-file fileb:///tmp/lambdas/maintenance_detection.zip \
+  --role arn:aws:iam::000000000000:role/lambda-role \
+  --environment "Variables={MAINTENANCE_URL=http://maintenance-service:8005}"
+
+awslocal lambda create-event-source-mapping \
+  --function-name maintenance-detection-lambda \
+  --event-source-arn "$MAINT_QUEUE_ARN"
+
+awslocal lambda create-function \
+  --function-name relocation-lambda \
+  --runtime python3.11 \
+  --handler handler.lambda_handler \
+  --zip-file fileb:///tmp/lambdas/relocation.zip \
+  --role arn:aws:iam::000000000000:role/lambda-role \
+  --environment "Variables={RELOCATION_URL=http://relocation-service:8006}"
+
+awslocal lambda create-event-source-mapping \
+  --function-name relocation-lambda \
+  --event-source-arn "$RELOC_QUEUE_ARN"

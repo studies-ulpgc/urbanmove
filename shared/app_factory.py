@@ -12,7 +12,10 @@ def create_service_app(service_name: str, title: str) -> FastAPI:
     return app
 
 def _configure_logging(service_name: str) -> None:
-    fmt = f'{{"timestamp": "%(asctime)s", "service": "{service_name}", "level": "%(levelname)s", "message": %(message)s}}'
+    fmt = (
+        f'{{"timestamp": "%(asctime)s", "service": "{service_name}", '
+        f'"level": "%(levelname)s", "message": %(message)s}}'
+    )
     logging.basicConfig(level=logging.INFO, format=fmt)
 
 def _register_health_route(app: FastAPI, service_name: str) -> None:
