@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
-from database import Base
+from shared.database import Base
 from sqlalchemy import Column, DateTime, String
 
 
@@ -29,4 +29,4 @@ class Vehicle(Base):
     model = Column(String, nullable=False)
     zone_id = Column(String, nullable=False)
     status = Column(String, default=VehicleStatus.AVAILABLE.value, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))

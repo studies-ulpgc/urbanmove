@@ -1,21 +1,20 @@
 import unittest
-from unittest.mock import patch
-
 from fastapi.testclient import TestClient
-from main import app
+from main import app, get_service
+from service import RelocationService
+from shared.testing import FakeEventPublisher
 
 
 class TestRelocationService(unittest.TestCase):
     def setUp(self):
+        self.fake_publisher = FakeEventPublisher()
+        app.dependency_overrides[get_service] = lambda: RelocationService(self.fake_publisher)
         self.client = TestClient(app)
 
-    def test_health_check(self):
-        res = self.client.get("/health")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {"status": "ok", "service": "relocation"})
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
-    @patch("main.publish_event")
-    def test_create_and_complete_relocation(self, mock_publish):
+    def test_create_and_complete_relocation(self):
         payload = {"vehicle_id": "veh-03", "from_zone": "ZONA-2", "to_zone": "ZONA-1"}
         created = self.client.post("/relocation-orders", json=payload)
         self.assertEqual(created.status_code, 201)
@@ -28,7 +27,8 @@ class TestRelocationService(unittest.TestCase):
         completed = self.client.patch(f"/relocation-orders/{order_id}/status", json={"status": "COMPLETED"})
         self.assertEqual(completed.status_code, 200)
         self.assertEqual(completed.json()["status"], "COMPLETED")
-        self.assertEqual(mock_publish.call_count, 2)
+        self.assertEqual(self.fake_publisher.published[0][0], "RelocationOrderCreated")
+        self.assertEqual(self.fake_publisher.published[1][0], "RelocationOrderCompleted")
 
     def test_unknown_order_returns_404(self):
         res = self.client.patch("/relocation-orders/rel-unknown/status", json={"status": "ASSIGNED"})

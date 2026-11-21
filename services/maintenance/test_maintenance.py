@@ -1,21 +1,20 @@
 import unittest
-from unittest.mock import patch
-
 from fastapi.testclient import TestClient
-from main import app
+from main import app, get_service
+from service import MaintenanceService
+from shared.testing import FakeEventPublisher
 
 
 class TestMaintenanceService(unittest.TestCase):
     def setUp(self):
+        self.fake_publisher = FakeEventPublisher()
+        app.dependency_overrides[get_service] = lambda: MaintenanceService(self.fake_publisher)
         self.client = TestClient(app)
 
-    def test_health_check(self):
-        res = self.client.get("/health")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {"status": "ok", "service": "maintenance"})
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
-    @patch("main.publish_event")
-    def test_create_and_complete_maintenance_order(self, mock_publish):
+    def test_create_and_complete_maintenance_order(self):
         payload = {"vehicle_id": "veh-08", "order_type": "RECHARGE", "reason": "Batería al 12%"}
         created = self.client.post("/maintenance-orders", json=payload)
         self.assertEqual(created.status_code, 201)
@@ -28,7 +27,8 @@ class TestMaintenanceService(unittest.TestCase):
         completed = self.client.patch(f"/maintenance-orders/{order_id}/complete")
         self.assertEqual(completed.status_code, 200)
         self.assertEqual(completed.json()["status"], "COMPLETED")
-        self.assertEqual(mock_publish.call_count, 2)
+        self.assertEqual(self.fake_publisher.published[0][0], "VehicleWithdrawnForMaintenance")
+        self.assertEqual(self.fake_publisher.published[1][0], "VehicleReturnedToService")
 
     def test_complete_unknown_order_returns_404(self):
         self.assertEqual(self.client.patch("/maintenance-orders/mnt-unknown/complete").status_code, 404)

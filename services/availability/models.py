@@ -1,6 +1,5 @@
 from datetime import UTC, datetime
-
-from database import Base
+from shared.database import Base
 from sqlalchemy import Boolean, Column, DateTime, String
 
 

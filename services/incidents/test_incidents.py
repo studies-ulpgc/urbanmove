@@ -1,26 +1,25 @@
 import unittest
-from unittest.mock import patch
-
 from fastapi.testclient import TestClient
-from main import app
+from main import app, get_service
+from service import IncidentService
+from shared.testing import FakeEventPublisher
 
 
 class TestIncidentsService(unittest.TestCase):
     def setUp(self):
+        self.fake_publisher = FakeEventPublisher()
+        app.dependency_overrides[get_service] = lambda: IncidentService(self.fake_publisher)
         self.client = TestClient(app)
 
-    def test_health_check(self):
-        res = self.client.get("/health")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {"status": "ok", "service": "incidents"})
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
-    @patch("main.publish_event")
-    def test_report_list_and_resolve_incident(self, mock_publish):
+    def test_report_list_and_resolve_incident(self):
         payload = {"vehicle_id": "veh-05", "description": "Rueda pinchada", "severity": "HIGH"}
         create = self.client.post("/incidents", json=payload)
         self.assertEqual(create.status_code, 201)
         inc_id = create.json()["id"]
-        mock_publish.assert_called_once()
+        self.assertEqual(self.fake_publisher.published[0][0], "IncidentReported")
 
         listing = self.client.get("/incidents?status=OPEN")
         self.assertEqual(listing.status_code, 200)

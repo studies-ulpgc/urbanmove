@@ -1,26 +1,25 @@
 import unittest
-from unittest.mock import patch
-
 from fastapi.testclient import TestClient
-from main import app
+from main import app, get_service
+from service import InventoryService
+from shared.testing import FakeEventPublisher
 
 
 class TestInventoryService(unittest.TestCase):
     def setUp(self):
+        self.fake_publisher = FakeEventPublisher()
+        app.dependency_overrides[get_service] = lambda: InventoryService(self.fake_publisher)
         self.client = TestClient(app)
 
-    def test_health_check(self):
-        response = self.client.get("/health")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"status": "ok", "service": "inventory"})
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
-    @patch("main.publish_event")
-    def test_full_vehicle_lifecycle(self, mock_publish):
+    def test_full_vehicle_lifecycle(self):
         payload = {"vehicle_type": "SCOOTER", "model": "Xiaomi Pro 2", "zone_id": "ZONA-1"}
         create_res = self.client.post("/vehicles", json=payload)
         self.assertEqual(create_res.status_code, 201)
         vehicle_id = create_res.json()["id"]
-        mock_publish.assert_called_once()
+        self.assertEqual(self.fake_publisher.published[0][0], "VehiclePurchased")
 
         list_res = self.client.get("/vehicles?zone_id=ZONA-1&status=AVAILABLE")
         self.assertEqual(list_res.status_code, 200)

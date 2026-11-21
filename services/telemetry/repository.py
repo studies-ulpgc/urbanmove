@@ -1,23 +1,11 @@
 import uuid
-
 from models import TelemetryRecord
 from schemas import TelemetryCreate
 from sqlalchemy.orm import Session
 
 
 def save_telemetry(db: Session, data: TelemetryCreate) -> TelemetryRecord:
-    record = TelemetryRecord(
-        id=f"tel-{uuid.uuid4().hex[:8]}",
-        vehicle_id=data.vehicle_id,
-        battery_level=data.battery_level,
-        latitude=data.latitude,
-        longitude=data.longitude,
-        uses_since_review=data.uses_since_review,
-    )
-    db.add(record)
-    db.commit()
-    db.refresh(record)
-    return record
+    return _persist(db, _build_entity(data))
 
 
 def find_latest_by_vehicle(db: Session, vehicle_id: str) -> TelemetryRecord | None:
@@ -27,3 +15,21 @@ def find_latest_by_vehicle(db: Session, vehicle_id: str) -> TelemetryRecord | No
         .order_by(TelemetryRecord.recorded_at.desc())
         .first()
     )
+
+
+def _build_entity(data: TelemetryCreate) -> TelemetryRecord:
+    return TelemetryRecord(
+        id=f"tel-{uuid.uuid4().hex[:8]}",
+        vehicle_id=data.vehicle_id,
+        battery_level=data.battery_level,
+        latitude=data.latitude,
+        longitude=data.longitude,
+        uses_since_review=data.uses_since_review,
+    )
+
+
+def _persist(db: Session, record: TelemetryRecord) -> TelemetryRecord:
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record

@@ -1,40 +1,30 @@
-import logging
 import uuid
-
 import repository
-from database import Base, engine, get_db
-from events import publish_event
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Depends, Header
 from models import VehicleStatus
 from schemas import VehicleCreate, VehicleResponse, VehicleStatusUpdate
+from service import InventoryService
+from shared.app_factory import create_service_app
+from shared.database import Base, engine, get_db
+from shared.events import SnsEventPublisher
 from sqlalchemy.orm import Session
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='{"timestamp": "%(asctime)s", "service": "inventory", "level": "%(levelname)s", "message": %(message)s}',
-)
-logger = logging.getLogger("inventory")
-
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="UrbanMove - Inventory Service", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app = create_service_app("inventory", "UrbanMove - Inventory Service")
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "inventory"}
+def get_service() -> InventoryService:
+    return InventoryService(SnsEventPublisher("inventory-service"))
 
 
 @app.post("/vehicles", response_model=VehicleResponse, status_code=201)
 def register_vehicle(
-    payload: VehicleCreate, db: Session = Depends(get_db), x_correlation_id: str | None = Header(default=None)
+        payload: VehicleCreate,
+        db: Session = Depends(get_db),
+        service: InventoryService = Depends(get_service),
+        x_correlation_id: str | None = Header(default=None),
 ):
-    corr_id = x_correlation_id or str(uuid.uuid4())
-    vehicle = repository.create_vehicle(db, payload)
-    publish_event("VehiclePurchased", _vehicle_payload(vehicle), corr_id)
-    logger.info(f'"Created {vehicle.id}", "correlation_id": "{corr_id}"')
-    return vehicle
+    return service.register(db, payload, x_correlation_id or str(uuid.uuid4()))
 
 
 @app.get("/vehicles", response_model=list[VehicleResponse])
@@ -44,25 +34,10 @@ def list_vehicles(zone_id: str | None = None, status: VehicleStatus | None = Non
 
 @app.patch("/vehicles/{vehicle_id}/status", response_model=VehicleResponse)
 def update_status(
-    vehicle_id: str,
-    payload: VehicleStatusUpdate,
-    db: Session = Depends(get_db),
-    x_correlation_id: str | None = Header(default=None),
+        vehicle_id: str,
+        payload: VehicleStatusUpdate,
+        db: Session = Depends(get_db),
+        service: InventoryService = Depends(get_service),
+        x_correlation_id: str | None = Header(default=None),
 ):
-    corr_id = x_correlation_id or str(uuid.uuid4())
-    vehicle = repository.find_vehicle_by_id(db, vehicle_id)
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    updated = repository.save_status(db, vehicle, payload.status)
-    logger.info(f'"Updated {vehicle_id} -> {updated.status}", "correlation_id": "{corr_id}"')
-    return updated
-
-
-def _vehicle_payload(vehicle) -> dict:
-    return {
-        "vehicle_id": vehicle.id,
-        "vehicle_type": vehicle.vehicle_type,
-        "model": vehicle.model,
-        "zone_id": vehicle.zone_id,
-        "status": vehicle.status,
-    }
+    return service.update_status(db, vehicle_id, payload.status, x_correlation_id or str(uuid.uuid4()))
