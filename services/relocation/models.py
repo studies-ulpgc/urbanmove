@@ -1,8 +1,9 @@
 from datetime import UTC, datetime
 from enum import Enum
 
-from shared.database import Base
 from sqlalchemy import Column, DateTime, String
+
+from shared.database import Base
 
 
 class RelocationStatus(str, Enum):
