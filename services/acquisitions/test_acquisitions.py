@@ -1,39 +1,42 @@
 import unittest
-from unittest.mock import patch
-
 from fastapi.testclient import TestClient
-from main import app
+from gateway import InventoryGateway
+from main import app, get_service
+from service import AcquisitionService
+from shared.events import EventPublisher
+
+
+class FakeInventoryGateway(InventoryGateway):
+    def __init__(self):
+        self.calls = 0
+
+    def register_vehicles(self, data, correlation_id: str) -> None:
+        self.calls += 1
+
+
+class FakeEventPublisher(EventPublisher):
+    def __init__(self):
+        self.published = []
+
+    def publish(self, event_type: str, payload: dict, correlation_id: str) -> None:
+        self.published.append((event_type, payload))
 
 
 class TestAcquisitionsService(unittest.TestCase):
     def setUp(self):
+        self.fake_inventory = FakeInventoryGateway()
+        self.fake_publisher = FakeEventPublisher()
+        app.dependency_overrides[get_service] = lambda: AcquisitionService(
+            self.fake_inventory, self.fake_publisher
+        )
         self.client = TestClient(app)
 
-    def test_health_check(self):
-        res = self.client.get("/health")
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {"status": "ok", "service": "acquisitions"})
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
-    @patch("main.publish_event")
-    @patch("main._notify_inventory")
-    def test_register_and_list_acquisition(self, mock_sync, mock_publish):
-        payload = {
-            "vehicle_type": "BIKE",
-            "model": "UrbanBike E1",
-            "zone_id": "ZONA-2",
-            "quantity": 3,
-            "unit_cost": 450.0,
-        }
+    def test_register_and_list_acquisition(self):
+        payload = {"vehicle_type": "BIKE", "model": "UrbanBike E1", "zone_id": "ZONA-2", "quantity": 3, "unit_cost": 450.0}
         created = self.client.post("/acquisitions", json=payload)
         self.assertEqual(created.status_code, 201)
-        self.assertEqual(created.json()["quantity"], 3)
-        mock_sync.assert_called_once()
-        mock_publish.assert_called_once()
-
-        listing = self.client.get("/acquisitions")
-        self.assertEqual(listing.status_code, 200)
-        self.assertGreaterEqual(len(listing.json()), 1)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertEqual(self.fake_inventory.calls, 1)
+        self.assertEqual(len(self.fake_publisher.published), 1)

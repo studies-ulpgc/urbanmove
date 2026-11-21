@@ -135,12 +135,15 @@ services:
       retries: 3
 
   acquisitions-service:
-    build: ../services/acquisitions
+    build:
+      context: ..
+      dockerfile: services/acquisitions/Dockerfile
     container_name: urbanmove-acquisitions
     ports:
       - "8007:8007"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/acquisitions_db
+      - AWS_ENDPOINT_URL=http://localstack:4566
     depends_on:
       postgres:
         condition: service_healthy
