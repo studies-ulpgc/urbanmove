@@ -1,7 +1,13 @@
+import json
+import logging
+import os
+import uuid
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-import json, logging, os, uuid, boto3
+
+import boto3
 from botocore.config import Config
+
 
 class EventPublisher(ABC):
     @abstractmethod

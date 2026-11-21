@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+
 from models import RelocationOrder, RelocationStatus
 from schemas import RelocationCreate
 from sqlalchemy.orm import Session

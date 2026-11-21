@@ -1,13 +1,15 @@
 import uuid
+
 import repository
 from fastapi import Depends, Header
 from models import RelocationStatus
 from schemas import RelocationCreate, RelocationResponse, RelocationStatusUpdate
 from service import RelocationService
+from sqlalchemy.orm import Session
+
 from shared.app_factory import create_service_app
 from shared.database import Base, engine, get_db
 from shared.events import SnsEventPublisher
-from sqlalchemy.orm import Session
 
 Base.metadata.create_all(bind=engine)
 app = create_service_app("relocation", "UrbanMove - Relocation Service")

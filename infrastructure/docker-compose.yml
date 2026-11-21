@@ -32,7 +32,9 @@ services:
       - "./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
 
   inventory-service:
-    build: ../services/inventory
+    build:
+      context: ..
+      dockerfile: services/inventory/Dockerfile
     container_name: urbanmove-inventory
     restart: on-failure
     ports:
@@ -44,13 +46,15 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
 
   availability-service:
-    build: ../services/availability
+    build:
+      context: ..
+      dockerfile: services/availability/Dockerfile
     container_name: urbanmove-availability
     ports:
       - "8002:8002"
@@ -61,75 +65,87 @@ services:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
 
   telemetry-service:
-    build: ../services/telemetry
+    build:
+      context: ..
+      dockerfile: services/telemetry/Dockerfile
     container_name: urbanmove-telemetry
     ports:
       - "8003:8003"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/telemetry_db
+      - AWS_ENDPOINT_URL=http://localstack:4566
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
 
   incidents-service:
-    build: ../services/incidents
+    build:
+      context: ..
+      dockerfile: services/incidents/Dockerfile
     container_name: urbanmove-incidents
     ports:
       - "8004:8004"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/incidents_db
+      - AWS_ENDPOINT_URL=http://localstack:4566
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
 
   maintenance-service:
-    build: ../services/maintenance
+    build:
+      context: ..
+      dockerfile: services/maintenance/Dockerfile
     container_name: urbanmove-maintenance
     ports:
       - "8005:8005"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/maintenance_db
+      - AWS_ENDPOINT_URL=http://localstack:4566
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8005/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
 
   relocation-service:
-    build: ../services/relocation
+    build:
+      context: ..
+      dockerfile: services/relocation/Dockerfile
     container_name: urbanmove-relocation
     ports:
       - "8006:8006"
     environment:
       - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/relocation_db
+      - AWS_ENDPOINT_URL=http://localstack:4566
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8006/health')"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -149,7 +165,7 @@ services:
         condition: service_healthy
     restart: on-failure
     healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8007/health')" ]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8007/health')"]
       interval: 10s
       timeout: 5s
       retries: 3

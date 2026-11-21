@@ -1,7 +1,9 @@
 import unittest
+
 from fastapi.testclient import TestClient
 from main import app, get_service
 from service import MaintenanceService
+
 from shared.testing import FakeEventPublisher
 
 

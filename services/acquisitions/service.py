@@ -1,10 +1,12 @@
 import logging
+
 import repository
 from gateway import InventoryGateway
 from models import Acquisition
 from schemas import AcquisitionCreate
-from shared.events import EventPublisher
 from sqlalchemy.orm import Session
+
+from shared.events import EventPublisher
 
 logger = logging.getLogger("acquisitions")
 

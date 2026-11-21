@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  PYTHONPATH: ${{ github.workspace }}
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
@@ -25,17 +28,10 @@ jobs:
           pip install fastapi uvicorn sqlalchemy boto3 httpx pydantic ruff
 
       - name: Check code style with Ruff
-        run: ruff check services/
+        run: ruff check shared/ services/ lambdas/
 
-      - name: Run unit tests for all services
-        run: |
-          for service_dir in services/*/; do
-            echo "Testing $service_dir"
-            (cd "$service_dir" && python -m unittest discover -p "test_*.py")
-          done
-
-      - name: Check code style with Ruff
-        run: ruff check services/ lambdas/
+      - name: Run shared tests
+        run: python -m unittest discover -s shared -p "test_*.py"
 
       - name: Run unit tests for all services and lambdas
         run: |
@@ -49,7 +45,7 @@ jobs:
           mkdir -p dist
           for lambda_dir in lambdas/*/; do
             name=$(basename "$lambda_dir")
-            (cd "$lambda_dir" && zip -r "../../dist/${name}.zip" handler.py)
+            (cd "$lambda_dir" && zip -r "../../dist/${name}.zip" .)
           done
 
   build-docker:
@@ -61,22 +57,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Inventory Docker image
-        run: docker build -t urbanmove-inventory:ci ./services/inventory
+        run: docker build -f services/inventory/Dockerfile -t urbanmove-inventory:ci .
 
       - name: Build Availability Docker image
-        run: docker build -t urbanmove-availability:ci ./services/availability
+        run: docker build -f services/availability/Dockerfile -t urbanmove-availability:ci .
 
       - name: Build Telemetry Docker image
-        run: docker build -t urbanmove-telemetry:ci ./services/telemetry
+        run: docker build -f services/telemetry/Dockerfile -t urbanmove-telemetry:ci .
 
       - name: Build Incidents Docker image
-        run: docker build -t urbanmove-incidents:ci ./services/incidents
+        run: docker build -f services/incidents/Dockerfile -t urbanmove-incidents:ci .
 
       - name: Build Maintenance Docker image
-        run: docker build -t urbanmove-maintenance:ci ./services/maintenance
+        run: docker build -f services/maintenance/Dockerfile -t urbanmove-maintenance:ci .
 
       - name: Build Relocation Docker image
-        run: docker build -t urbanmove-relocation:ci ./services/relocation
+        run: docker build -f services/relocation/Dockerfile -t urbanmove-relocation:ci .
 
       - name: Build Acquisitions Docker image
-        run: docker build -t urbanmove-acquisitions:ci ./services/acquisitions
+        run: docker build -f services/acquisitions/Dockerfile -t urbanmove-acquisitions:ci .

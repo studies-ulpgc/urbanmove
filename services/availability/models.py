@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
-from shared.database import Base
+
 from sqlalchemy import Boolean, Column, DateTime, String
+
+from shared.database import Base
 
 
 class VehicleAvailability(Base):

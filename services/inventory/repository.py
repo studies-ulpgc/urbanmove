@@ -1,4 +1,5 @@
 import uuid
+
 from models import Vehicle, VehicleStatus
 from schemas import VehicleCreate
 from sqlalchemy.orm import Session

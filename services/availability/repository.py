@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+
 from models import VehicleAvailability
 from schemas import AvailabilityRegister
 from sqlalchemy.orm import Session

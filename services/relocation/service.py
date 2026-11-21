@@ -1,10 +1,12 @@
 import logging
+
 import repository
 from fastapi import HTTPException
 from models import RelocationOrder, RelocationStatus
 from schemas import RelocationCreate
-from shared.events import EventPublisher
 from sqlalchemy.orm import Session
+
+from shared.events import EventPublisher
 
 logger = logging.getLogger("relocation")
 

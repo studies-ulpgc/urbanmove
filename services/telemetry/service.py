@@ -1,10 +1,12 @@
 import logging
+
 import repository
 from fastapi import HTTPException
 from models import TelemetryRecord
 from schemas import TelemetryCreate
-from shared.events import EventPublisher
 from sqlalchemy.orm import Session
+
+from shared.events import EventPublisher
 
 logger = logging.getLogger("telemetry")
 LOW_BATTERY_THRESHOLD = 20.0

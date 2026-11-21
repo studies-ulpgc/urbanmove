@@ -1,10 +1,12 @@
 import logging
+
 import repository
 from fastapi import HTTPException
 from models import Incident
 from schemas import IncidentCreate
-from shared.events import EventPublisher
 from sqlalchemy.orm import Session
+
+from shared.events import EventPublisher
 
 logger = logging.getLogger("incidents")
 

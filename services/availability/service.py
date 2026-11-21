@@ -1,4 +1,5 @@
 import logging
+
 import repository
 from fastapi import HTTPException
 from models import VehicleAvailability

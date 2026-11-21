@@ -1,4 +1,5 @@
 import uuid
+
 from models import TelemetryRecord
 from schemas import TelemetryCreate
 from sqlalchemy.orm import Session

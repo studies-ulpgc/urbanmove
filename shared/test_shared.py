@@ -1,5 +1,7 @@
 import unittest
+
 from fastapi.testclient import TestClient
+
 from shared.app_factory import create_service_app
 from shared.events import SnsEventPublisher
 

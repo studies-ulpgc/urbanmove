@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
-from shared.database import Base
+
 from sqlalchemy import Column, DateTime, Float, Integer, String
+
+from shared.database import Base
 
 
 class TelemetryRecord(Base):

@@ -1,13 +1,15 @@
 import uuid
+
 import repository
 from fastapi import Depends, Header
 from gateway import HttpInventoryGateway
 from schemas import AcquisitionCreate, AcquisitionResponse
 from service import AcquisitionService
+from sqlalchemy.orm import Session
+
 from shared.app_factory import create_service_app
 from shared.database import Base, engine, get_db
 from shared.events import SnsEventPublisher
-from sqlalchemy.orm import Session
 
 Base.metadata.create_all(bind=engine)
 app = create_service_app("acquisitions", "UrbanMove - Acquisitions Service")
