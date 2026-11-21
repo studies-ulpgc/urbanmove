@@ -14,12 +14,14 @@ export class App implements OnInit {
   private http = inject(HttpClient);
   private readonly api = {
     inventory: 'http://localhost:8001',
+    incidents: 'http://localhost:8004',
     maintenance: 'http://localhost:8005',
     relocation: 'http://localhost:8006',
     acquisitions: 'http://localhost:8007',
   };
 
   vehicles: any[] = [];
+  incidents: any[] = [];
   orders: any[] = [];
   relocations: any[] = [];
 
@@ -32,6 +34,7 @@ export class App implements OnInit {
 
   loadAll(): void {
     this.http.get<any[]>(`${this.api.inventory}/vehicles`).subscribe((d) => (this.vehicles = d));
+    this.http.get<any[]>(`${this.api.incidents}/incidents`).subscribe((d) => (this.incidents = d));
     this.http.get<any[]>(`${this.api.maintenance}/maintenance-orders`).subscribe((d) => (this.orders = d));
     this.http.get<any[]>(`${this.api.relocation}/relocation-orders`).subscribe((d) => (this.relocations = d));
   }
@@ -62,9 +65,13 @@ export class App implements OnInit {
     this.http.patch(`${this.api.maintenance}/maintenance-orders/${id}/complete`, {}).subscribe(() => this.loadAll());
   }
 
-  completeRelocation(id: string): void {
+  updateRelocationStatus(id: string, status: string): void {
     this.http
-      .patch(`${this.api.relocation}/relocation-orders/${id}/status`, { status: 'COMPLETED' })
+      .patch(`${this.api.relocation}/relocation-orders/${id}/status`, { status })
       .subscribe(() => this.loadAll());
+  }
+
+  resolveIncident(id: string): void {
+    this.http.patch(`${this.api.incidents}/incidents/${id}/resolve`, {}).subscribe(() => this.loadAll());
   }
 }

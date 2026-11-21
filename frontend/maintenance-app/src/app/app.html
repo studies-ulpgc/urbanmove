@@ -2,7 +2,7 @@
   <header class="header">
     <div>
       <h1>UrbanMove · Operaciones y Mantenimiento</h1>
-      <p>Control de flota, taller, recolocación y adquisiciones</p>
+      <p>Control de flota, taller, recolocación, incidencias y adquisiciones</p>
     </div>
     <button class="btn-primary" (click)="loadAll()">Actualizar paneles</button>
   </header>
@@ -17,7 +17,7 @@
       <strong class="kpi-value">{{ openMaintenanceCount }}</strong>
     </div>
     <div class="card">
-      <span class="kpi-label">Recolocaciones Pendientes</span>
+      <span class="kpi-label">Recolocaciones Activas</span>
       <strong class="kpi-value">{{ pendingRelocationCount }}</strong>
     </div>
   </section>
@@ -68,8 +68,26 @@
       <h3>4. Órdenes de Recolocación (8006)</h3>
       <div class="row" *ngFor="let r of relocations">
         <span><b>{{ r.vehicle_id }}</b>: {{ r.from_zone }} → {{ r.to_zone }} ({{ r.status }})</span>
-        <button *ngIf="r.status !== 'COMPLETED'" class="btn-small" (click)="completeRelocation(r.id)">
-          Completar
+        <div class="actions">
+          <button *ngIf="r.status === 'PENDING'" class="btn-small btn-amber" (click)="updateRelocationStatus(r.id, 'ASSIGNED')">
+            Asignar
+          </button>
+          <button *ngIf="r.status === 'ASSIGNED'" class="btn-small btn-blue" (click)="updateRelocationStatus(r.id, 'IN_PROGRESS')">
+            En curso
+          </button>
+          <button *ngIf="r.status === 'IN_PROGRESS'" class="btn-small" (click)="updateRelocationStatus(r.id, 'COMPLETED')">
+            Completar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card full-width">
+      <h3>5. Incidencias Reportadas (8004)</h3>
+      <div class="row" *ngFor="let inc of incidents">
+        <span><b>{{ inc.vehicle_id }}</b> [{{ inc.severity }}] — {{ inc.description }} ({{ inc.status }})</span>
+        <button *ngIf="inc.status !== 'RESOLVED'" class="btn-small" (click)="resolveIncident(inc.id)">
+          Resolver
         </button>
       </div>
     </section>
