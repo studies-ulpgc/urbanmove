@@ -16,8 +16,14 @@ MAINT_QUEUE_ARN=$(awslocal sqs get-queue-attributes --queue-url "$MAINT_QUEUE_UR
 RELOC_QUEUE_URL=$(awslocal sqs create-queue --queue-name relocation-queue --query 'QueueUrl' --output text)
 RELOC_QUEUE_ARN=$(awslocal sqs get-queue-attributes --queue-url "$RELOC_QUEUE_URL" --attribute-names QueueArn --query 'Attributes.QueueArn' --output text)
 
-DL_QUEUE_URL=$(awslocal sqs create-queue --queue-name datalake-ingestion-queue --query 'QueueUrl' --output text)
+DL_DLQ_URL=$(awslocal sqs create-queue --queue-name datalake-ingestion-dlq --query 'QueueUrl' --output text)
+DL_DLQ_ARN=$(awslocal sqs get-queue-attributes --queue-url "$DL_DLQ_URL" --attribute-names QueueArn --query 'Attributes.QueueArn' --output text)
+
+DL_QUEUE_URL=$(awslocal sqs create-queue --queue-name datalake-ingestion-queue  \
+  --attributes "{\"RedrivePolicy\":\"{\\\"deadLetterTargetArn\\\":\\\"$DL_DLQ_ARN\\\",\\\"maxReceiveCount\\\":\\\"3\\\"}\"}" \
+  --query 'QueueUrl' --output text)
 DL_QUEUE_ARN=$(awslocal sqs get-queue-attributes --queue-url "$DL_QUEUE_URL" --attribute-names QueueArn --query 'Attributes.QueueArn' --output text)
+
 
 awslocal sns subscribe --topic-arn "$TOPIC_ARN" --protocol sqs --notification-endpoint "$MAINT_QUEUE_ARN"
 awslocal sns subscribe --topic-arn "$TOPIC_ARN" --protocol sqs --notification-endpoint "$RELOC_QUEUE_ARN"
@@ -32,6 +38,9 @@ zip -rq /tmp/lambdas/maintenance_detection.zip shared/
 
 zip -rq /tmp/lambdas/relocation.zip shared/
 (cd lambdas/relocation && zip -rq /tmp/lambdas/relocation.zip handler.py)
+
+zip -rq /tmp/lambdas/analytics_ingestion.zip shared/
+(cd lambdas/analytics_ingestion && zip -rq /tmp/lambdas/analytics_ingestion.zip handler.py)
 
 awslocal lambda create-function \
   --function-name maintenance-detection-lambda \
@@ -56,3 +65,15 @@ awslocal lambda create-function \
 awslocal lambda create-event-source-mapping \
   --function-name relocation-lambda \
   --event-source-arn "$RELOC_QUEUE_ARN"
+
+awslocal lambda create-function \
+  --function-name analytics-ingestion-lambda \
+  --runtime python3.11 \
+  --handler handler.lambda_handler \
+  --zip-file fileb:///tmp/lambdas/analytics_ingestion.zip \
+  --role arn:aws:iam::000000000000:role/lambda-role \
+  --environment "Variables={AWS_ENDPOINT_URL=http://localstack:4566,DATALAKE_BUCKET=urbanmove-datalake}"
+
+awslocal lambda create-event-source-mapping \
+  --function-name analytics-ingestion-lambda \
+  --event-source-arn "$DL_QUEUE_ARN"
